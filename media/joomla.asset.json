@@ -1,0 +1,27 @@
+{
+  "$schema": "https://developer.joomla.org/schemas/json-meta/web_asset.json",
+  "name": "mod_launch_audit",
+  "version": "1.0.0",
+  "description": "Web assets for mod_launch_audit",
+  "license": "GPL-2.0-or-later",
+  "assets": [
+    {
+      "name": "mod_launch_audit.admin",
+      "type": "style",
+      "uri": "mod_launch_audit/launch-audit.css",
+      "version": "1.0.0"
+    },
+    {
+      "name": "mod_launch_audit.admin",
+      "type": "script",
+      "uri": "mod_launch_audit/launch-audit.js",
+      "dependencies": [
+        "core"
+      ],
+      "attributes": {
+        "type": "module"
+      },
+      "version": "1.0.0"
+    }
+  ]
+}
