@@ -111,7 +111,7 @@ $renderCheckItem = static function (array $check): string {
          data-status="<?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="d-flex align-items-center gap-2 flex-grow-1">
-                <span class="badge <?php echo $badgeClass; ?> p-2 d-inline-flex align-items-center justify-content-center audit-badge"
+                <span class="badge <?php echo $badgeClass; ?> p-0 d-inline-flex align-items-center justify-content-center audit-badge"
                       title="<?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?>">
                     <span class="<?php echo $iconClass; ?>" aria-hidden="true"></span>
                     <span class="visually-hidden"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></span>

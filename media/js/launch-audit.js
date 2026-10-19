@@ -109,7 +109,7 @@
 
               const badge = item.querySelector('.audit-badge');
               if (badge) {
-                badge.className = 'badge bg-success text-white p-2 d-inline-flex align-items-center justify-content-center audit-badge';
+                badge.className = 'badge bg-success text-white p-0 d-inline-flex align-items-center justify-content-center audit-badge';
                 const passText = (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_STATUS_PASS')) || 'Passed';
                 badge.title = passText;
                 badge.innerHTML = `<span class="icon-check" aria-hidden="true"></span><span class="visually-hidden">${passText}</span>`;
