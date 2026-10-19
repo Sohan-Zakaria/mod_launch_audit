@@ -60,16 +60,37 @@
               body: bodyParams.toString(),
             });
 
-            if (!response.ok) {
-              const errData = await response.json().catch(() => null);
-              const errMsg = (errData && errData.message)
-                || (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_JS_FIX_ERROR'))
-                || 'Failed to apply quick fix.';
+            const rawText = await response.text();
+            let json = null;
+            try {
+              json = JSON.parse(rawText);
+            } catch (err) {
+              json = null;
+            }
+
+            if (!response.ok || (json && json.success === false)) {
+              let errMsg = '';
+              if (json) {
+                if (json.message) {
+                  errMsg = json.message;
+                } else if (json.data && json.data.message) {
+                  errMsg = json.data.message;
+                } else if (Array.isArray(json.errors) && json.errors.length > 0) {
+                  errMsg = json.errors[0].message || json.errors[0].title || '';
+                } else if (json.error) {
+                  errMsg = typeof json.error === 'string' ? json.error : (json.error.message || '');
+                }
+              }
+
+              if (!errMsg) {
+                errMsg = (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_JS_FIX_ERROR'))
+                  || 'Failed to apply quick fix. Please review server permissions.';
+              }
+
               throw new Error(errMsg);
             }
 
-            const json = await response.json();
-            const resultData = json.data || json;
+            const resultData = (json && json.data) ? json.data : json;
 
             const successMsg = (resultData && resultData.message)
               || (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_JS_FIX_SUCCESS'))
@@ -98,11 +119,11 @@
               const currentValEl = item.querySelector('.current-value');
               if (currentValEl) {
                 if (fixKey === 'debug' || fixKey === 'disable_compat6') {
-                  currentValEl.textContent = 'Disabled';
+                  currentValEl.textContent = (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_STATUS_DISABLED')) || 'Disabled';
                 } else if (fixKey === 'error_reporting') {
-                  currentValEl.textContent = 'Default';
+                  currentValEl.textContent = (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_ERROR_REPORTING_DEFAULT')) || 'Default';
                 } else if (fixKey === 'robots') {
-                  currentValEl.textContent = 'Index, Follow';
+                  currentValEl.textContent = (window.Joomla && window.Joomla.Text._('MOD_LAUNCH_AUDIT_ROBOTS_DEFAULT_INDEX')) || 'Index, Follow';
                 }
               }
 

@@ -44,6 +44,9 @@ Text::script('MOD_LAUNCH_AUDIT_JS_NETWORK_ERROR');
 Text::script('MOD_LAUNCH_AUDIT_STATUS_PASS');
 Text::script('MOD_LAUNCH_AUDIT_STATUS_WARNING');
 Text::script('MOD_LAUNCH_AUDIT_STATUS_FAIL');
+Text::script('MOD_LAUNCH_AUDIT_STATUS_DISABLED');
+Text::script('MOD_LAUNCH_AUDIT_ERROR_REPORTING_DEFAULT');
+Text::script('MOD_LAUNCH_AUDIT_ROBOTS_DEFAULT_INDEX');
 
 $showScore          = (bool) $params->get('show_score', 1);
 $showCategoryFilter = (bool) $params->get('show_category_filter', 1);

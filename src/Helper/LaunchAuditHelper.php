@@ -18,6 +18,8 @@ namespace YourVendor\Module\LaunchAudit\Administrator\Helper;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
+use Joomla\CMS\Filesystem\Path;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseAwareInterface;
@@ -431,7 +433,7 @@ class LaunchAuditHelper implements DatabaseAwareInterface
      * @throws  \RuntimeException           If unauthorized, invalid token, or write failure.
      * @throws  \InvalidArgumentException   If invalid fixKey is provided.
      */
-    public function fixConfigAjax(): array
+    public static function fixConfigAjax(): array
     {
         $app = Factory::getApplication();
 
@@ -457,7 +459,7 @@ class LaunchAuditHelper implements DatabaseAwareInterface
         }
 
         if ($fixKey === 'disable_compat6') {
-            $db = $this->getDatabase() ?: Factory::getContainer()->get(DatabaseInterface::class);
+            $db = Factory::getContainer()->get(DatabaseInterface::class);
             $query = $db->getQuery(true)
                 ->update($db->quoteName('#__extensions'))
                 ->set($db->quoteName('enabled') . ' = 0')
@@ -468,11 +470,16 @@ class LaunchAuditHelper implements DatabaseAwareInterface
         } else {
             $configFile = JPATH_CONFIGURATION . '/configuration.php';
 
+            if (!file_exists($configFile)) {
+                throw new \RuntimeException(Text::_('MOD_LAUNCH_AUDIT_ERROR_CONFIG_NOT_WRITABLE'), 500);
+            }
+
+            // Attempt to make file writable via Path and chmod
             if (!is_writable($configFile)) {
-                @chmod($configFile, 0644);
-                if (!is_writable($configFile)) {
-                    throw new \RuntimeException(Text::_('MOD_LAUNCH_AUDIT_ERROR_CONFIG_NOT_WRITABLE'), 500);
+                if (class_exists(Path::class)) {
+                    @Path::setPermissions($configFile, '0644');
                 }
+                @chmod($configFile, 0644);
             }
 
             if (!class_exists('JConfig')) {
@@ -483,7 +490,7 @@ class LaunchAuditHelper implements DatabaseAwareInterface
             $registry = new Registry($config);
 
             if ($fixKey === 'debug') {
-                $registry->set('debug', false);
+                $registry->set('debug', 0);
             } elseif ($fixKey === 'error_reporting') {
                 $registry->set('error_reporting', 'default');
             } elseif ($fixKey === 'robots') {
@@ -492,9 +499,54 @@ class LaunchAuditHelper implements DatabaseAwareInterface
 
             $phpOutput = $registry->toString('PHP', ['class' => 'JConfig', 'closingtag' => false]);
 
-            if (file_put_contents($configFile, $phpOutput, LOCK_EX) === false) {
-                throw new \RuntimeException(Text::_('MOD_LAUNCH_AUDIT_ERROR_CONFIG_WRITE_FAILED'), 500);
+            $written = false;
+
+            // Strategy 1: Direct write if writable
+            if (is_writable($configFile)) {
+                if (class_exists(File::class)) {
+                    $written = @File::write($configFile, $phpOutput);
+                }
+                if (!$written) {
+                    $written = (@file_put_contents($configFile, $phpOutput, LOCK_EX) !== false);
+                }
             }
+
+            // Strategy 2: If direct write failed (e.g. read-only 0444 inode permissions on Unix),
+            // write to a temporary file in the configuration directory and atomically rename it.
+            // On Unix, rename() and unlink() only require directory write permissions, which works
+            // even when the target file has 0444 read-only permissions.
+            if (!$written) {
+                $tempFile = $configFile . '.tmp.' . bin2hex(random_bytes(6));
+                if (@file_put_contents($tempFile, $phpOutput, LOCK_EX) !== false) {
+                    @chmod($tempFile, 0644);
+                    if (@rename($tempFile, $configFile)) {
+                        $written = true;
+                    } else {
+                        @unlink($configFile);
+                        if (@rename($tempFile, $configFile)) {
+                            $written = true;
+                        } else {
+                            @unlink($tempFile);
+                        }
+                    }
+                }
+            }
+
+            // Strategy 3: Try forcing chmod 0666 and write
+            if (!$written) {
+                @chmod($configFile, 0666);
+                $written = (@file_put_contents($configFile, $phpOutput, LOCK_EX) !== false);
+            }
+
+            if (!$written) {
+                throw new \RuntimeException(Text::_('MOD_LAUNCH_AUDIT_ERROR_CONFIG_NOT_WRITABLE'), 500);
+            }
+
+            // Restore standard Joomla read-only permissions (0444) for security
+            if (class_exists(Path::class)) {
+                @Path::setPermissions($configFile, '0444');
+            }
+            @chmod($configFile, 0444);
 
             if (\function_exists('opcache_invalidate')) {
                 @opcache_invalidate($configFile, true);
@@ -507,4 +559,13 @@ class LaunchAuditHelper implements DatabaseAwareInterface
             'message' => Text::_('MOD_LAUNCH_AUDIT_FIX_SUCCESS'),
         ];
     }
+}
+
+// Aliases for modern Joomla HelperFactory and com_ajax class resolution
+if (!class_exists(__NAMESPACE__ . '\\LaunchauditHelper', false)) {
+    class_alias(LaunchAuditHelper::class, __NAMESPACE__ . '\\LaunchauditHelper');
+}
+
+if (!class_exists(__NAMESPACE__ . '\\Launch_auditHelper', false)) {
+    class_alias(LaunchAuditHelper::class, __NAMESPACE__ . '\\Launch_auditHelper');
 }

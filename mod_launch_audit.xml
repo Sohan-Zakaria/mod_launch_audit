@@ -13,6 +13,7 @@
 
     <files>
         <filename module="mod_launch_audit">services/provider.php</filename>
+        <filename>helper.php</filename>
         <filename>LICENSE.txt</filename>
         <folder>services</folder>
         <folder>src</folder>
