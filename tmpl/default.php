@@ -121,14 +121,14 @@ $renderCheckItem = static function (array $check): string {
                         <?php echo htmlspecialchars($check['title'], ENT_QUOTES, 'UTF-8'); ?>
                     </h6>
                     <div class="audit-meta small text-muted mt-1">
-                        <span class="audit-current me-3">
+                        <div class="audit-current">
                             <strong><?php echo Text::_('MOD_LAUNCH_AUDIT_CURRENT_LABEL'); ?>:</strong>
                             <span class="current-value"><?php echo htmlspecialchars($check['current'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </span>
-                        <span class="audit-recommended">
+                        </div>
+                        <div class="audit-recommended">
                             <strong><?php echo Text::_('MOD_LAUNCH_AUDIT_RECOMMENDED_LABEL'); ?>:</strong>
                             <span><?php echo htmlspecialchars($check['recommended'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </span>
+                        </div>
                     </div>
                 </div>
             </div>

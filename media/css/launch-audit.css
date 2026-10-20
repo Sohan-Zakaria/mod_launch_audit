@@ -172,6 +172,17 @@
 .audit-meta {
   font-size: 0.8125rem;
   color: var(--text-muted, #6c757d);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.audit-meta .audit-current,
+.audit-meta .audit-recommended {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .audit-meta strong {
